@@ -20,8 +20,7 @@ trusted_key_servers:
   - server_name: "matrix.org"
 suppress_key_server_warning: true
 
-enable_registration: true
-enable_registration_without_verification: true
+enable_registration: false
 
 password_config:
   enabled: false
