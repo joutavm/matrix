@@ -50,7 +50,7 @@ const replacements = [
   {
     search: `from: '"Authentication Service" <root@localhost>'`,
     replace: `from: '"${getEnv("SYNAPSE_FRIENDLY_SERVER_NAME")}" <${getEnv(
-      "SMTP_USER"
+      "SMTP_NOTIFY_FROM"
     )}>'`,
   },
   {
