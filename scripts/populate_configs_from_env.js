@@ -1,6 +1,30 @@
 const fs = require("fs");
 const { getEnv } = require("./utils");
 
+function tryExtractMasMatrixSecret() {
+  try {
+    const masConfig = fs.readFileSync(
+      "./configurations/synapse-mas/config.yaml",
+      "utf8"
+    );
+    // Find the first occurrence of a line starting with "secret:" under the matrix section
+    const match = masConfig.match(/\nmatrix:[\s\S]*?\n\s*secret:\s*([^\n\r]+)/);
+    if (match && match[1]) {
+      let value = match[1].trim();
+      if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      ) {
+        value = value.slice(1, -1);
+      }
+      return value;
+    }
+  } catch (_) {
+    // ignore; we'll fallback to env
+  }
+  return null;
+}
+
 const variables = {
   SYNAPSE_SERVER_NAME: getEnv("SYNAPSE_SERVER_NAME"),
   ADMIN_EMAIL: getEnv("ADMIN_EMAIL"),
@@ -21,6 +45,7 @@ const variables = {
   KEYCLOAK_FQDN: getEnv("KEYCLOAK_FQDN"),
   KEYCLOAK_CLIENT_ID: getEnv("KEYCLOAK_CLIENT_ID"),
   KEYCLOAK_CLIENT_SECRET: getEnv("KEYCLOAK_CLIENT_SECRET"),
+  KEYCLOAK_REALM_IDENTIFIER: getEnv("KEYCLOAK_REALM_IDENTIFIER"),
   SYNAPSE_FQDN: getEnv("SYNAPSE_FQDN"),
   SYNAPSE_SYNC_FQDN: getEnv("SYNAPSE_SYNC_FQDN"),
   SYNAPSE_MAS_FQDN: getEnv("SYNAPSE_MAS_FQDN"),
@@ -28,6 +53,12 @@ const variables = {
   SYNAPSE_MAS_SECRET: getEnv("SYNAPSE_MAS_SECRET"),
   SYNAPSE_API_ADMIN_TOKEN: getEnv("SYNAPSE_API_ADMIN_TOKEN"),
 };
+
+// Ensure admin token matches MAS matrix.secret to avoid 401 from Synapse admin API
+const extractedMasSecret = tryExtractMasMatrixSecret();
+if (extractedMasSecret) {
+  variables.SYNAPSE_API_ADMIN_TOKEN = extractedMasSecret;
+}
 
 const templates = [
   {
